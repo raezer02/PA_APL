@@ -1,0 +1,3 @@
+admin|admin|123
+user|user|123
+admin|ada|ada
