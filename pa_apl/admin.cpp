@@ -216,7 +216,7 @@ void lihatPendapatan()
                 getline(lapangan, harga, '|');
                 getline(lapangan, statusLap);
 
-                if(nama == lap)
+                if(idLap == lap)
                 {
                     total += stoi(harga);
                 }
