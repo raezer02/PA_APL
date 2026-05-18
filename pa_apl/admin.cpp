@@ -399,14 +399,14 @@ void menuAdmin()
                 break;
 
             case 3:
-                // updateBookingSelesai(ambilJamSekarang());
+                updateBookingSelesai(ambilJamSekarang());
                 approveBooking();
-                int jamTes;
+                // int jamTes;
 
-                cout << "Masukkan jam sekarang untuk test: ";
-                cin >> jamTes;
+                // cout << "Masukkan jam sekarang untuk test: ";
+                // cin >> jamTes;
 
-                updateBookingSelesai(jamTes);
+                // updateBookingSelesai(jamTes);
                 break;
 
             case 4:

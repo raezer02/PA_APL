@@ -102,7 +102,7 @@ bool cekUsername(string username)
     return false;
 }
 
-void registerUser()
+bool registerUser()
 {
     AkunHeader();
 
@@ -113,11 +113,12 @@ void registerUser()
 
     cout << "Username : ";
     cin >> username;
+
     if(cekUsername(username))
-        {
-            cout << "\nUsername sudah terdaftar!\n";
-            return;
-        }
+    {
+        cout << "\nUsername sudah terdaftar!\n";
+        return false;
+    }
 
     cout << "Password : ";
     cin >> password;
@@ -134,8 +135,8 @@ void registerUser()
     file.close();
 
     cout << "\nRegister berhasil!\n";
-    loginUser();
-    return;
+
+    return loginUser();
 }
 
 bool menuAuth()
@@ -175,7 +176,10 @@ bool menuAuth()
 
             case 2:
 
-                registerUser();
+                if(registerUser())
+                {
+                    return true;
+                }
                 break;
 
             case 3:
