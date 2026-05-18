@@ -1,7 +1,3 @@
-// ======================
-// main.cpp
-// ======================
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,8 +9,103 @@ using namespace std;
 string roleLogin;
 string userLogin;
 
+void AkunHeader()
+{
+    ifstream file("akun.txt");
+
+    if (!file.good() || file.peek() == EOF)
+    {
+        file.close();
+
+        ofstream outfile("akun.txt", ios::app);
+        if (outfile.is_open())
+        {
+            outfile << "role|name|password" << endl;
+            outfile.close();
+        }
+    }
+}
+
+bool loginUser()
+{
+    AkunHeader();
+    
+    string username;
+    string password;
+    
+    cout << "\n===== LOGIN =====\n";
+    
+    cout << "Username : ";
+    cin >> username;
+    
+    cout << "Password : ";
+    cin >> password;
+    
+    ifstream file("akun.txt");
+    
+    string header;
+    getline(file, header);
+    string role;
+    string user;
+    string pass;
+    
+    while(getline(file, role, '|'))
+    {
+        getline(file, user, '|');
+        getline(file, pass);
+        
+        if(username == user &&
+            password == pass)
+            {
+                roleLogin = role;
+            userLogin = user;
+            
+            cout << "\nLogin berhasil!\n";
+            
+            file.close();
+
+            return true;
+        }
+    }
+    
+    file.close();
+    
+    cout << "\nLogin gagal!\n";
+    
+    return false;
+}
+
+bool cekUsername(string username)
+{
+    AkunHeader();
+
+    ifstream file("akun.txt");
+
+    string header;
+    getline(file, header);
+
+    string role, user, pass;
+
+    while(getline(file, role, '|'))
+    {
+        getline(file, user, '|');
+        getline(file, pass);
+
+        if(user == username)
+        {
+            file.close();
+            return true;
+        }
+    }
+
+    file.close();
+    return false;
+}
+
 void registerUser()
 {
+    AkunHeader();
+
     string username;
     string password;
 
@@ -22,6 +113,11 @@ void registerUser()
 
     cout << "Username : ";
     cin >> username;
+    if(cekUsername(username))
+        {
+            cout << "\nUsername sudah terdaftar!\n";
+            return;
+        }
 
     cout << "Password : ";
     cin >> password;
@@ -38,51 +134,8 @@ void registerUser()
     file.close();
 
     cout << "\nRegister berhasil!\n";
-}
-
-bool loginUser()
-{
-    string username;
-    string password;
-
-    cout << "\n===== LOGIN =====\n";
-
-    cout << "Username : ";
-    cin >> username;
-
-    cout << "Password : ";
-    cin >> password;
-
-    ifstream file("akun.txt");
-
-    string role;
-    string user;
-    string pass;
-
-    while(getline(file, role, '|'))
-    {
-        getline(file, user, '|');
-        getline(file, pass);
-
-        if(username == user &&
-           password == pass)
-        {
-            roleLogin = role;
-            userLogin = user;
-
-            cout << "\nLogin berhasil!\n";
-
-            file.close();
-
-            return true;
-        }
-    }
-
-    file.close();
-
-    cout << "\nLogin gagal!\n";
-
-    return false;
+    loginUser();
+    return;
 }
 
 bool menuAuth()
@@ -99,6 +152,15 @@ bool menuAuth()
 
         cout << "Pilih : ";
         cin >> pilih;
+
+        if(cin.fail())
+        {
+            cin.clear();
+            cin.ignore(1000, '\n');
+
+            cout << "\nInput harus angka!\n";
+            continue;
+        }
 
         switch(pilih)
         {
@@ -130,19 +192,19 @@ bool menuAuth()
 
 int main()
 {
-    if(!menuAuth())
-    {
-        return 0;
-    }
+    AkunHeader();
 
-    if(roleLogin == "admin")
+    while (menuAuth())
     {
-        menuAdmin();
+        if (roleLogin == "admin")
+        {
+            menuAdmin();
+        }
+        else if (roleLogin == "user")
+        {
+            menuUser();
+        }
+        
     }
-    else
-    {
-        menuUser();
-    }
-
     return 0;
 }

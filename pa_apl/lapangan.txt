@@ -1,1 +1,2 @@
-1|ada|2000|ready
+1|satu|1000000|ready
+2|ada|500000|ready

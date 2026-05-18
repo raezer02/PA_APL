@@ -1,4 +1,6 @@
+role|name|password
 admin|admin|123
 user|user|123
-admin|ada|ada
-user|useer|123
+user|jawa|123
+user|ada|123
+

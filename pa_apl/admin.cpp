@@ -1,22 +1,104 @@
-// ======================
-// admin.cpp
-// ======================
-
 #include "admin.h"
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <ctime>
+#include <cctype>
 
 using namespace std;
+
+void menuAuth();
+
+int ambilJamSekarang()
+{
+    time_t sekarang = time(0);
+    tm *waktu = localtime(&sekarang);
+
+    return waktu->tm_hour;
+}
+
+void updateBookingSelesai(int jamSekarang)
+{
+    ifstream file("booking.txt");
+
+    if(!file.is_open())
+    {
+        return;
+    }
+
+    ofstream temp("temp.txt");
+
+    string header;
+    getline(file, header);
+
+    temp << "ID|USER|LAPANGAN|JAM_MULAI|DURASI|JAM_SELESAI|STATUS\n";
+
+    string id, user, lap, jamMulai, durasi, jamSelesai, status;
+
+    while(getline(file, id, '|'))
+    {
+        getline(file, user, '|');
+        getline(file, lap, '|');
+        getline(file, jamMulai, '|');
+        getline(file, durasi, '|');
+        getline(file, jamSelesai, '|');
+        getline(file, status);
+
+        if(jamSelesai.length() >= 2 &&
+           isdigit(jamSelesai[0]) &&
+           isdigit(jamSelesai[1]))
+        {
+            int selesai = stoi(jamSelesai.substr(0, 2));
+
+            if(status == "acc" && jamSekarang >= selesai)
+            {
+                status = "done";
+            }
+        }
+
+        temp << id << "|"
+             << user << "|"
+             << lap << "|"
+             << jamMulai << "|"
+             << durasi << "|"
+             << jamSelesai << "|"
+             << status << endl;
+    }
+
+    file.close();
+    temp.close();
+
+    remove("booking.txt");
+    rename("temp.txt", "booking.txt");
+}
+
+string formatRupiah(int angka)
+{
+    string hasil = to_string(angka);
+    string rupiah = "";
+
+    int hitung = 0;
+
+    for(int i = hasil.length() - 1; i >= 0; i--)
+    {
+        rupiah = hasil[i] + rupiah;
+        hitung++;
+
+        if(hitung == 3 && i != 0)
+        {
+            rupiah = "." + rupiah;
+            hitung = 0;
+        }
+    }
+
+    return "Rp " + rupiah;
+}
 
 void lihatLapangan()
 {
     ifstream file("lapangan.txt");
 
-    string id;
-    string nama;
-    string harga;
-    string status;
+    string id, nama, harga, status;
 
     cout << "\n===== DAFTAR LAPANGAN =====\n";
 
@@ -28,7 +110,8 @@ void lihatLapangan()
 
         cout << "ID      : " << id << endl;
         cout << "Nama    : " << nama << endl;
-        cout << "Harga   : " << harga << endl;
+        cout << "Harga   : "
+        << formatRupiah(stoi(harga)) << endl;
         cout << "Status  : " << status << endl;
         cout << "----------------------\n";
     }
@@ -38,8 +121,7 @@ void lihatLapangan()
 
 void tambahLapangan()
 {
-    string nama;
-    string harga;
+    string nama, harga;
 
     cin.ignore();
 
@@ -69,8 +151,7 @@ void tambahLapangan()
          << nama
          << "|"
          << harga
-         << "|"
-         << "ready"
+         << "|ready"
          << endl;
 
     file.close();
@@ -80,8 +161,7 @@ void tambahLapangan()
 
 void tambahAdmin()
 {
-    string username;
-    string password;
+    string username, password;
 
     cout << "\nUsername Admin : ";
     cin >> username;
@@ -107,38 +187,72 @@ void approveBooking()
 {
     ifstream file("booking.txt");
 
-    string id;
-    string user;
-    string lap;
-    string jam;
-    string status;
+    string header;
+    getline(file, header);
+
+    string id, user, lap, jamMulai, durasi, jamSelesai, status;
 
     cout << "\n===== BOOKING PENDING =====\n";
+
+    bool adaPending = false;
 
     while(getline(file, id, '|'))
     {
         getline(file, user, '|');
         getline(file, lap, '|');
-        getline(file, jam, '|');
+        getline(file, jamMulai, '|');
+        getline(file, durasi, '|');
+        getline(file, jamSelesai, '|');
         getline(file, status);
 
         if(status == "pending")
         {
-            cout << id
-                 << " | "
-                 << user
-                 << " | "
-                 << lap
-                 << " | "
-                 << jam
-                 << endl;
+            adaPending = true;
+
+            int hargaLapangan = 0;
+
+            ifstream lapanganFile("lapangan.txt");
+
+            string idLap, namaLap, hargaLap, statusLap;
+
+            while(getline(lapanganFile, idLap, '|'))
+            {
+                getline(lapanganFile, namaLap, '|');
+                getline(lapanganFile, hargaLap, '|');
+                getline(lapanganFile, statusLap);
+
+                if(idLap == lap)
+                {
+                    hargaLapangan = stoi(hargaLap);
+                    break;
+                }
+            }
+
+            lapanganFile.close();
+
+            int totalHarga = hargaLapangan * stoi(durasi);
+
+            cout << "ID        : " << id << endl;
+            cout << "User      : " << user << endl;
+            cout << "Lapangan  : " << lap << endl;
+            cout << "Jam       : " << jamMulai << " - " << jamSelesai << endl;
+            cout << "Durasi    : " << durasi << " jam" << endl;
+            cout << "Harga/Jam : " << formatRupiah(hargaLapangan) << endl;
+            cout << "Total     : " << formatRupiah(totalHarga) << endl;
+            cout << "Status    : " << status << endl;
+            cout << "----------------------\n";
         }
     }
 
     file.close();
 
-    string pilihId;
-    string aksi;
+    if(!adaPending)
+    {
+        cout << "\nBelum ada booking berstatus pending!\n";
+        return;
+    }
+
+    string pilihId, aksi;
 
     cout << "\nMasukkan ID Booking : ";
     cin >> pilihId;
@@ -146,31 +260,43 @@ void approveBooking()
     cout << "Status (acc/decline) : ";
     cin >> aksi;
 
+    if(aksi != "acc" && aksi != "decline")
+    {
+        cout << "\nStatus tidak valid!\n";
+        return;
+    }
+
     ifstream baca("booking.txt");
     ofstream temp("temp.txt");
+
+    getline(baca, header);
+
+    temp << "ID|USER|LAPANGAN|JAM_MULAI|DURASI|JAM_SELESAI|STATUS\n";
+
+    bool ditemukan = false;
 
     while(getline(baca, id, '|'))
     {
         getline(baca, user, '|');
         getline(baca, lap, '|');
-        getline(baca, jam, '|');
+        getline(baca, jamMulai, '|');
+        getline(baca, durasi, '|');
+        getline(baca, jamSelesai, '|');
         getline(baca, status);
 
         if(id == pilihId)
         {
             status = aksi;
+            ditemukan = true;
         }
 
-        temp << id
-             << "|"
-             << user
-             << "|"
-             << lap
-             << "|"
-             << jam
-             << "|"
-             << status
-             << endl;
+        temp << id << "|"
+             << user << "|"
+             << lap << "|"
+             << jamMulai << "|"
+             << durasi << "|"
+             << jamSelesai << "|"
+             << status << endl;
     }
 
     baca.close();
@@ -179,18 +305,22 @@ void approveBooking()
     remove("booking.txt");
     rename("temp.txt", "booking.txt");
 
-    cout << "\nStatus booking berhasil diubah!\n";
+    if(ditemukan)
+        cout << "\nStatus booking berhasil diubah!\n";
+    else
+        cout << "\nID booking tidak ditemukan!\n";
 }
 
 void lihatPendapatan()
 {
+    updateBookingSelesai(ambilJamSekarang());
+
     ifstream booking("booking.txt");
 
-    string id;
-    string user;
-    string lap;
-    string jam;
-    string status;
+    string header;
+    getline(booking, header);
+
+    string id, user, lap, jamMulai, durasi, jamSelesai, status;
 
     int total = 0;
 
@@ -198,17 +328,16 @@ void lihatPendapatan()
     {
         getline(booking, user, '|');
         getline(booking, lap, '|');
-        getline(booking, jam, '|');
+        getline(booking, jamMulai, '|');
+        getline(booking, durasi, '|');
+        getline(booking, jamSelesai, '|');
         getline(booking, status);
 
-        if(status == "acc")
+        if(status == "acc" || status == "done")
         {
             ifstream lapangan("lapangan.txt");
 
-            string idLap;
-            string nama;
-            string harga;
-            string statusLap;
+            string idLap, nama, harga, statusLap;
 
             while(getline(lapangan, idLap, '|'))
             {
@@ -218,7 +347,7 @@ void lihatPendapatan()
 
                 if(idLap == lap)
                 {
-                    total += stoi(harga);
+                    total += stoi(harga) * stoi(durasi);
                 }
             }
 
@@ -228,9 +357,8 @@ void lihatPendapatan()
 
     booking.close();
 
-    cout << "\nTotal Pendapatan : "
-         << total
-         << endl;
+    cout << "\nTotal Pendapatan : " 
+    << formatRupiah(total) << endl;
 }
 
 void menuAdmin()
@@ -250,6 +378,15 @@ void menuAdmin()
 
         cout << "Pilih : ";
         cin >> pilih;
+        if(cin.fail())
+        {
+            cin.clear();
+            cin.ignore(1000, '\n');
+
+            cout << "\nInput Hanya Bisa Angka!\n";
+            continue;
+        }
+        
 
         switch(pilih)
         {
@@ -262,7 +399,14 @@ void menuAdmin()
                 break;
 
             case 3:
+                // updateBookingSelesai(ambilJamSekarang());
                 approveBooking();
+                int jamTes;
+
+                cout << "Masukkan jam sekarang untuk test: ";
+                cin >> jamTes;
+
+                updateBookingSelesai(jamTes);
                 break;
 
             case 4:
@@ -275,11 +419,11 @@ void menuAdmin()
 
             case 6:
                 cout << "\nLogout...\n";
-                break;
+                return;
 
             default:
                 cout << "\nPilihan tidak valid!\n";
         }
 
-    } while(pilih != 6);
+    } while(true);
 }
