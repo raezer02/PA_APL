@@ -82,6 +82,77 @@ int ambilAngkaJam(string jam)
     return stoi(jam.substr(0, 2));
 }
 
+void searchLapangan()
+{
+    string cariJam;
+
+    cout << "\n===== SEARCH LAPANGAN =====\n";
+    cout << "Masukkan jam : ";
+    cin >> cariJam;
+
+    ifstream lapangan("lapangan.txt");
+
+    string idLap;
+    string nama;
+    string harga;
+    string statusLap;
+
+    bool ditemukan = false;
+
+    while(getline(lapangan, idLap, '|'))
+    {
+        getline(lapangan, nama, '|');
+        getline(lapangan, harga, '|');
+        getline(lapangan, statusLap);
+
+        bool ready = true;
+
+        ifstream booking("booking.txt");
+
+        string idBook;
+        string user;
+        string lap;
+        string jam;
+        string statusBook;
+
+        while(getline(booking, idBook, '|'))
+        {
+            getline(booking, user, '|');
+            getline(booking, lap, '|');
+            getline(booking, jam, '|');
+            getline(booking, statusBook);
+
+            // LINEAR SEARCH
+            if(lap == idLap &&
+               jam == cariJam &&
+               statusBook == "acc")
+            {
+                ready = false;
+            }
+        }
+
+        booking.close();
+
+        if(ready && statusLap == "ready")
+        {
+            cout << "\nID      : " << idLap;
+            cout << "\nNama    : " << nama;
+            cout << "\nHarga   : " << harga;
+            cout << "\nStatus  : " << statusLap;
+            cout << "\n-------------------";
+
+            ditemukan = true;
+        }
+    }
+
+    lapangan.close();
+
+    if(!ditemukan)
+    {
+        cout << "\nTidak ada lapangan yang ready\n";
+    }
+}
+
 bool cekRentangTersediaKecualiId(string lapangan, int mulaiBaru, int selesaiBaru, string idKecuali)
 {
     buatHeaderBooking();
@@ -807,6 +878,7 @@ void menuUser()
         {
             case 1:
                 clearScreenUser();
+                searchLapangan();
                 bookingLapangan();
                 pauseScreenUser();
                 break;
